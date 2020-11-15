@@ -49,28 +49,73 @@ learn = loop.run_until_complete(asyncio.gather(*tasks))[0]
 loop.close()
 
 
-@app.route('/')
-async def homepage(request):
-    html_file = path / 'view' / 'index.html'
-    return HTMLResponse(html_file.open().read())
+# @app.route('/')
+# async def homepage(request):
+#     html_file = path / 'view' / 'index.html'
+#     return HTMLResponse(html_file.open().read())
 
 
-@app.route('/analyze', methods=['POST'])
-async def analyze(request):
-    img_data = await request.form()
-    img_bytes = await (img_data['file'].read())
-    img = open_image(BytesIO(img_bytes))
-    prediction = learn.predict(img)[0]
-    return JSONResponse({'result': str(prediction)})
+# @app.route('/analyze', methods=['POST'])
+# async def analyze(request):
+#     img_data = await request.form()
+#     img_bytes = await (img_data['file'].read())
+#     img = open_image(BytesIO(img_bytes))
+#     prediction = learn.predict(img)[0]
+#     return JSONResponse({'result': str(prediction)})
+
+# @app.route("/classify-url", methods=["GET"])
+# async def classify_url(request):
+#     img_bytes = await get_bytes(request.query_params["url"])
+#     img = open_image(BytesIO(img_bytes))
+#     prediction = learn.predict(img)[0]
+#     return JSONResponse({'result': str(prediction)})
+
+
+# if __name__ == '__main__':
+#     if 'serve' in sys.argv:
+#         uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
+
+@app.route("/upload", methods=["POST"])
+async def upload(request):
+    data = await request.form()
+    bytes = await (data["file"].read())
+    return predict_image_from_bytes(bytes)
+
 
 @app.route("/classify-url", methods=["GET"])
 async def classify_url(request):
-    img_bytes = await get_bytes(request.query_params["url"])
-    img = open_image(BytesIO(img_bytes))
+    bytes = await get_bytes(request.query_params["url"])
+    return predict_image_from_bytes(bytes)
+
+
+def predict_image_from_bytes(bytes):
+    img = open_image(BytesIO(bytes))
     prediction = learn.predict(img)[0]
     return JSONResponse({'result': str(prediction)})
 
 
-if __name__ == '__main__':
-    if 'serve' in sys.argv:
-        uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
+@app.route("/")
+def form(request):
+    return HTMLResponse(
+        """
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            Select image to upload:
+            <input type="file" name="file">
+            <input type="submit" value="Upload Image">
+        </form>
+        Or submit a URL:
+        <form action="/classify-url" method="get">
+            <input type="url" name="url">
+            <input type="submit" value="Fetch and analyze image">
+        </form>
+    """)
+
+
+@app.route("/form")
+def redirect_to_homepage(request):
+    return RedirectResponse("/")
+
+
+if __name__ == "__main__":
+    if "serve" in sys.argv:
+        uvicorn.run(app, host="0.0.0.0", port=8008)

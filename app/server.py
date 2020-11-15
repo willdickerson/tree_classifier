@@ -48,74 +48,78 @@ tasks = [asyncio.ensure_future(setup_learner())]
 learn = loop.run_until_complete(asyncio.gather(*tasks))[0]
 loop.close()
 
+async def get_bytes(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.read()
 
-# @app.route('/')
-# async def homepage(request):
-#     html_file = path / 'view' / 'index.html'
-#     return HTMLResponse(html_file.open().read())
-
-
-# @app.route('/analyze', methods=['POST'])
-# async def analyze(request):
-#     img_data = await request.form()
-#     img_bytes = await (img_data['file'].read())
-#     img = open_image(BytesIO(img_bytes))
-#     prediction = learn.predict(img)[0]
-#     return JSONResponse({'result': str(prediction)})
-
-# @app.route("/classify-url", methods=["GET"])
-# async def classify_url(request):
-#     img_bytes = await get_bytes(request.query_params["url"])
-#     img = open_image(BytesIO(img_bytes))
-#     prediction = learn.predict(img)[0]
-#     return JSONResponse({'result': str(prediction)})
+@app.route('/')
+async def homepage(request):
+    html_file = path / 'view' / 'index.html'
+    return HTMLResponse(html_file.open().read())
 
 
-# if __name__ == '__main__':
-#     if 'serve' in sys.argv:
-#         uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
-
-@app.route("/upload", methods=["POST"])
-async def upload(request):
-    data = await request.form()
-    bytes = await (data["file"].read())
-    return predict_image_from_bytes(bytes)
-
+@app.route('/analyze', methods=['POST'])
+async def analyze(request):
+    img_data = await request.form()
+    img_bytes = await (img_data['file'].read())
+    img = open_image(BytesIO(img_bytes))
+    prediction = learn.predict(img)[0]
+    return JSONResponse({'result': str(prediction)})
 
 @app.route("/classify-url", methods=["GET"])
 async def classify_url(request):
-    bytes = await get_bytes(request.query_params["url"])
-    return predict_image_from_bytes(bytes)
-
-
-def predict_image_from_bytes(bytes):
-    img = open_image(BytesIO(bytes))
+    img_bytes = await get_bytes(request.query_params["url"])
+    img = open_image(BytesIO(img_bytes))
     prediction = learn.predict(img)[0]
     return JSONResponse({'result': str(prediction)})
 
 
-@app.route("/")
-def form(request):
-    return HTMLResponse(
-        """
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            Select image to upload:
-            <input type="file" name="file">
-            <input type="submit" value="Upload Image">
-        </form>
-        Or submit a URL:
-        <form action="/classify-url" method="get">
-            <input type="url" name="url">
-            <input type="submit" value="Fetch and analyze image">
-        </form>
-    """)
+if __name__ == '__main__':
+    if 'serve' in sys.argv:
+        uvicorn.run(app=app, host='0.0.0.0', port=5000, log_level="info")
+
+# @app.route("/upload", methods=["POST"])
+# async def upload(request):
+#     data = await request.form()
+#     bytes = await (data["file"].read())
+#     return predict_image_from_bytes(bytes)
 
 
-@app.route("/form")
-def redirect_to_homepage(request):
-    return RedirectResponse("/")
+# @app.route("/classify-url", methods=["GET"])
+# async def classify_url(request):
+#     bytes = await get_bytes(request.query_params["url"])
+#     return predict_image_from_bytes(bytes)
 
 
-if __name__ == "__main__":
-    if "serve" in sys.argv:
-        uvicorn.run(app, host="0.0.0.0", port=8008)
+# def predict_image_from_bytes(bytes):
+#     img = open_image(BytesIO(bytes))
+#     prediction = learn.predict(img)[0]
+#     return JSONResponse({'result': str(prediction)})
+
+
+# @app.route("/")
+# def form(request):
+#     return HTMLResponse(
+#         """
+#         <form action="/upload" method="post" enctype="multipart/form-data">
+#             Select image to upload:
+#             <input type="file" name="file">
+#             <input type="submit" value="Upload Image">
+#         </form>
+#         Or submit a URL:
+#         <form action="/classify-url" method="get">
+#             <input type="url" name="url">
+#             <input type="submit" value="Fetch and analyze image">
+#         </form>
+#     """)
+
+
+# @app.route("/form")
+# def redirect_to_homepage(request):
+#     return RedirectResponse("/")
+
+
+# if __name__ == "__main__":
+#     if "serve" in sys.argv:
+#         uvicorn.run(app, host="0.0.0.0", port=8008)

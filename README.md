@@ -1,15 +1,11 @@
-# Starter for deploying [fast.ai](https://www.fast.ai) models on [Render](https://render.com)
+# Texas Tree Gazer
 
-This repo can be used as a starting point to deploy [fast.ai](https://github.com/fastai/fastai) models on Render.
+Scraped iNaturalist for research-grade images of central Texas trees with `scrape_inat.py`.
 
-The sample app described here is up at https://fastai-v3.onrender.com. Test it out with bear images!
+Used fast.ai to train a neural network to classify the trees with `inaturalist_trees.ipynb`.
 
-You can test your changes locally by installing Docker and using the following command:
+`server.py` is a Starlette API server that accepts tree image URLs and returns the model's prediction as a JSON object.
 
-```
-docker build -t fastai-v3 . && docker run --rm -it -p 5000:5000 fastai-v3
-```
+`TexasTreeGazer.py` is a Twitter bot that looks for mentions containing an image and the keyword "ID" and tweets back a reply with the model's prediction. 
 
-The guide for production deployment to Render is at https://course.fast.ai/deployment_render.html.
-
-Please use [Render's fast.ai forum thread](https://forums.fast.ai/t/deployment-platform-render/33953) for questions and support.
+Modelled after [cougar-or-not](https://github.com/simonw/cougar-or-not) and the fast.ai model deployment [example](https://github.com/render-examples/fastai-v3).
